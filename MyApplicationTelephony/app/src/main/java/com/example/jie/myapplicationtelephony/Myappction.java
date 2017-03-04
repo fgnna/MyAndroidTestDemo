@@ -16,14 +16,12 @@ import android.util.Log;
 public class Myappction extends Application
 {
     @Override
-    public void onCreate() {
-        Log.d("Myappction","onCreate");
-        Intent intent2 = new Intent(this,TestAlarmManager.class);
-        PendingIntent pd =PendingIntent.getBroadcast(getApplicationContext(), 0, intent2,PendingIntent.FLAG_ONE_SHOT);
-        AlarmManager am = (AlarmManager)getSystemService(ALARM_SERVICE);
-        long triggerTime = 0;
-        am.set(AlarmManager.ELAPSED_REALTIME,triggerTime, pd);
+    public void onCreate()
+    {
         super.onCreate();
+        startService(new Intent(this,CallService.class));
+
+
     }
 
     @Override
