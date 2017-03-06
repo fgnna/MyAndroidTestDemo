@@ -19,7 +19,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".TelephonyService" >
+        <service android:name=".CallingServiceImpl" >
         </service>
     </application>
 
