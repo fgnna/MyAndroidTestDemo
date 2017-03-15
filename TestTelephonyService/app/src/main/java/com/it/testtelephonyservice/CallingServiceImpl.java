@@ -7,63 +7,51 @@ import android.util.Log;
  * Created by je on 17-3-6.
  */
 
-public class CallingServiceImpl extends TelephonyCallingService
+public class CallingServiceImpl extends BaseCallingService
 {
     private static final String TAG = "CallingServiceImpl";
-    /**
-     * 来电结束-未接听
-     */
-    protected  void onEndCallInComingNotAnswer()
-    {
-        Log.d(TAG, "来电结束-未接听");
+
+
+
+    @Override
+    protected void onEndCallInComingNotAnswer(CallInfoEntity infoEntity) {
+
     }
 
-    /**
-     * 来电结束-已接听
-     */
-    protected  void onEndCallInComingIsAnswer()
-    {
-        Log.d(TAG, "来电结束-已接听");
+    @Override
+    protected void onEndCallInComingIsAnswer(CallInfoEntity infoEntity) {
+
     }
 
-    /**
-     * 呼出结束-未接听
-     */
-    protected  void onEndCallOutNotAnswer()
-    {
-        Log.d(TAG, "呼出结束-未接听");
+    @Override
+    protected void onEndCallOutNotAnswer(CallInfoEntity infoEntity) {
+
     }
 
-    /**
-     * 呼出结束-已接听
-     */
-    protected  void onEndCallOutIsAnswer()
-    {
-        Log.d(TAG, "呼出结束-已接听");
-    }
+    @Override
+    protected void onEndCallOutIsAnswer(CallInfoEntity infoEntity) {
 
+    }
 
     /**
      * 来电-待接听
+     * @param number
      */
-    protected  void onComeingCallRinging()
+    protected  void onComeingCallRinging(String number)
     {
         Log.d(TAG, "来电-待接听");
     }
 
+    @Override
+    protected void onAnswerComeingCall(String number) {
 
-    /**
-     * 来电-正在通话
-     */
-    protected  void onAnswerComeingCall()
-    {
-        Log.d(TAG, "来电-正在通话");
     }
 
     /**
      * 呼出-正在通话
+     * @param number
      */
-    protected  void onOutCall()
+    protected  void onOutCall(String number)
     {
         Log.d(TAG, "呼出-正在通话");
     }
