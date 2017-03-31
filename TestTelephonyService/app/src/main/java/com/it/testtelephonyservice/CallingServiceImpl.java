@@ -55,4 +55,14 @@ public class CallingServiceImpl extends BaseCallingService
     {
         Log.d(TAG, "呼出-正在通话");
     }
+
+    @Override
+    protected void onErrorNoCalllog() {
+
+    }
+
+    @Override
+    protected void onCallStateIdel() {
+
+    }
 }

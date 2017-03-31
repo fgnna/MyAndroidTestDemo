@@ -1,8 +1,10 @@
 package com.it.testtelephonyservice;
 
+import android.Manifest;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.os.Handler;
@@ -10,6 +12,7 @@ import android.os.IBinder;
 import android.provider.CallLog;
 import android.support.annotation.IntDef;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -38,8 +41,6 @@ public abstract class BaseCallingService extends Service
     private boolean isAppOutCall = false;
     //是否来电
     private boolean mIsCallIn = false;
-    //来电是否已接听
-    private boolean mCallInAnswer = false;
     //是否未接来电
     private boolean isMissCallIn = false;
 
@@ -50,8 +51,7 @@ public abstract class BaseCallingService extends Service
     }
 
     @Override
-    public void onCreate()
-    {
+    public void onCreate() {
         super.onCreate();
         Log.d(TAG, "监听服务启动");
         mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
@@ -60,27 +60,23 @@ public abstract class BaseCallingService extends Service
         getContentResolver().registerContentObserver(CallLog.Calls.CONTENT_URI, false, new CallLogContentObserver(mHandler));
     }
 
-    public static void startServiceForOutCall(Context context)
-    {
-        Intent intent = new Intent(context,CallingServiceImpl.class);
-        intent.putExtra(APP_OUTCALL_INTENT,true);
+    public static void startServiceForOutCall(Context context) {
+        Intent intent = new Intent(context, CallingServiceImpl.class);
+        intent.putExtra(APP_OUTCALL_INTENT, true);
         context.startService(intent);
     }
 
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId)
-    {
-        if(null != intent)
-        {
-            isAppOutCall = intent.getBooleanExtra(APP_OUTCALL_INTENT,false);
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (null != intent) {
+            isAppOutCall = intent.getBooleanExtra(APP_OUTCALL_INTENT, false);
         }
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
-    public void onDestroy()
-    {
+    public void onDestroy() {
         super.onDestroy();
         mTelephonyManager.listen(mMyPhoneListerner, PhoneStateListener.LISTEN_NONE);
     }
@@ -90,45 +86,32 @@ public abstract class BaseCallingService extends Service
      * 当前电话通话状态
      * @see TelephonyManager#CALL_STATE_IDLE
      */
-    protected int mCallState ;
+    protected int mCallState;
     private String mNumber1;//主叫号码
     private String mNumber2;//可能出现的呼叫等待号码
 
-    class MyPhoneListerner extends PhoneStateListener
-    {
+    class MyPhoneListerner extends PhoneStateListener {
 
         @Override
-        public void onCallStateChanged(int state, String number)
-        {
+        public void onCallStateChanged(int state, String number) {
             mCallState = state;
-            switch (state)
-            {
+            switch (state) {
                 case TelephonyManager.CALL_STATE_RINGING:
                     mNumber1 = number;
                     mIsCallIn = true;
+                    isMissCallIn = true;
                     onComeingCallRinging(number);
                     break;
                 case TelephonyManager.CALL_STATE_OFFHOOK:
-                    if (mIsCallIn)
-                    {
+                    if (mIsCallIn) {
                         onAnswerComeingCall(number);
-                        mCallInAnswer = true;
-                    }
-                    else if(isAppOutCall)
-                    {
+                        isMissCallIn = false;
+                    } else if (isAppOutCall) {
                         onOutCall(number);
                     }
                     break;
                 case TelephonyManager.CALL_STATE_IDLE:
-                    if(mIsCallIn && mCallInAnswer)
-                    {
-                        isMissCallIn = false;
-                    }
-                    else if(mIsCallIn && !mCallInAnswer)
-                    {
-                        isMissCallIn = true;
-                    }
-                    mCallInAnswer = false;
+                    onCallStateIdel();
                     mIsCallIn = false;
                     mNumber1 = null;
                     mNumber2 = null;
@@ -143,23 +126,27 @@ public abstract class BaseCallingService extends Service
      * 在挂断后需要通过监听 CallLog 的变化来获取正确的通话记录
      * 及判断是否接听
      */
-    class CallLogContentObserver extends ContentObserver
-    {
-        private String[] projection =  new String[]{
+    class CallLogContentObserver extends ContentObserver {
+        private String[] projection = new String[]{
                 CallLog.Calls.DATE, CallLog.Calls.DURATION, CallLog.Calls.NUMBER,
                 CallLog.Calls._ID, CallLog.Calls.TYPE, CallLog.Calls.IS_READ,
                 CallLog.Calls.NEW};
         private String mLastid = "";
 
-        public CallLogContentObserver(Handler handler) {super(handler);}
+        public CallLogContentObserver(Handler handler) {
+            super(handler);
+        }
 
         @Override
-        public void onChange(boolean selfChange)
-        {
-            // TODO Auto-generated method stub
+        public void onChange(boolean selfChange) {
             super.onChange(selfChange);
             Log.d(TAG, "callLog记录变化通知");
             CallInfoEntity callInfoEntity = null;
+            if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_CALL_LOG) !=
+                    PackageManager.PERMISSION_GRANTED) {
+                onErrorNoCalllog();
+                return;
+            }
             Cursor cursor = getContentResolver().query(
                     CallLog.Calls.CONTENT_URI,
                     projection, null, null,
@@ -218,6 +205,12 @@ public abstract class BaseCallingService extends Service
                 mLastid = callInfoEntity._id;
                 handlerCallLogChange(callInfoEntity);
             }
+
+            if(null == callInfoEntity)
+            {
+                //如果没查出记录，可能 是因为权限被拒绝了
+                onErrorNoCalllog();
+            }
         }
 
     }
@@ -233,7 +226,7 @@ public abstract class BaseCallingService extends Service
             Log.d(TAG,infoEntity.toString());
 
         infoEntity.duration = infoEntity.duration * 1000;//秒数转毫秒数 后台需要
-        if(infoEntity.type == CallLog.Calls.OUTGOING_TYPE)
+        if(infoEntity.type == CallLog.Calls.OUTGOING_TYPE )
         {
             if(!isAppOutCall)
                 return;
@@ -247,7 +240,9 @@ public abstract class BaseCallingService extends Service
         }
         else
         {
-            //来电
+            /**
+             * 来电判断
+             */
             if(isMissCallIn)
             {
                 infoEntity.duration = 0;
@@ -303,5 +298,18 @@ public abstract class BaseCallingService extends Service
      * @param number
      */
     protected abstract void onOutCall(String number);
+
+    /**
+     * 没有通话记录异常 ，通常是由于没权限
+     */
+    protected abstract void onErrorNoCalllog();
+
+    /**
+     * 话机进入空闲状态，此方法用于处理一些因系统原因，
+     * 通话结束后没有产生calllog而导致问题，
+     * 比如小米手机出现过，在头闭wifi和4g网络情况下，不产生calllog的奇怪问题
+     * 在这方法里做一些清理工作
+     */
+    protected abstract void onCallStateIdel();
 
 }
