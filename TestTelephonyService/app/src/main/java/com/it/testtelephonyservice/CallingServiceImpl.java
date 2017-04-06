@@ -1,5 +1,6 @@
 package com.it.testtelephonyservice;
 
+import android.telephony.PhoneStateListener;
 import android.util.Log;
 
 
@@ -16,21 +17,22 @@ public class CallingServiceImpl extends BaseCallingService
     @Override
     protected void onEndCallInComingNotAnswer(CallInfoEntity infoEntity) {
 
+        Log.d(TAG, "来电，未接听");
     }
 
     @Override
     protected void onEndCallInComingIsAnswer(CallInfoEntity infoEntity) {
-
+        Log.d(TAG, "来电，已接听");
     }
 
     @Override
     protected void onEndCallOutNotAnswer(CallInfoEntity infoEntity) {
-
+        Log.d(TAG, "去电，未接听");
     }
 
     @Override
     protected void onEndCallOutIsAnswer(CallInfoEntity infoEntity) {
-
+        Log.d(TAG, "去电，已接听");
     }
 
     /**
@@ -44,7 +46,7 @@ public class CallingServiceImpl extends BaseCallingService
 
     @Override
     protected void onAnswerComeingCall(String number) {
-
+        Log.d(TAG, "来电，接听");
     }
 
     /**
@@ -58,11 +60,18 @@ public class CallingServiceImpl extends BaseCallingService
 
     @Override
     protected void onErrorNoCalllog() {
-
+        Log.d(TAG, "无log");
     }
 
     @Override
     protected void onCallStateIdel() {
+        Log.d(TAG, "电话回归空闲");
+    }
 
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy");
     }
 }
