@@ -6,3 +6,5 @@
  Socket通信测试
 ## BluetoothTest
  蓝牙通信测试
+## SensorFrameworkTest
+ 运动传感器测试
