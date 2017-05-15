@@ -1,7 +1,18 @@
 package com.it.testtelephonyservice;
 
+import android.media.AudioFormat;
+import android.media.AudioRecord;
+import android.media.MediaRecorder;
+import android.os.Environment;
 import android.telephony.PhoneStateListener;
 import android.util.Log;
+
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 
 /**
@@ -11,7 +22,7 @@ import android.util.Log;
 public class CallingServiceImpl extends BaseCallingService
 {
     private static final String TAG = "CallingServiceImpl";
-
+    private boolean isRecording = false;
 
 
     @Override
@@ -28,11 +39,13 @@ public class CallingServiceImpl extends BaseCallingService
     @Override
     protected void onEndCallOutNotAnswer(CallInfoEntity infoEntity) {
         Log.d(TAG, "去电，未接听");
+        isRecording = false;
     }
 
     @Override
     protected void onEndCallOutIsAnswer(CallInfoEntity infoEntity) {
         Log.d(TAG, "去电，已接听");
+        isRecording = false;
     }
 
     /**
@@ -55,7 +68,6 @@ public class CallingServiceImpl extends BaseCallingService
      */
     protected  void onOutCall(String number)
     {
-        Log.d(TAG, "呼出-正在通话");
     }
 
     @Override
@@ -73,5 +85,68 @@ public class CallingServiceImpl extends BaseCallingService
     public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy");
+    }
+
+
+    public void record() {
+//        AudioRecord audioRecorder = new AudioRecord(MediaRecorder.AudioSource.VOICE_CALL,
+//                AudioFormat.SAMPLE_RATE_UNSPECIFIED,
+//                AudioFormat.CHANNEL_IN_MONO,
+//                AudioFormat.ENCODING_PCM_16BIT,
+//                AudioRecord.getMinBufferSize(AudioFormat.SAMPLE_RATE_UNSPECIFIED,
+//                        AudioFormat.CHANNEL_IN_MONO,
+//                        AudioFormat.ENCODING_PCM_16BIT)
+//        );
+//        audioRecorder.startRecording();
+//        audioRecorder.read()
+//        audioRecorder.stop();
+        Log.d(TAG, "呼出-正在通话");
+
+        int frequency = 11025;
+        int channelConfiguration = AudioFormat.CHANNEL_CONFIGURATION_MONO;
+        int audioEncoding = AudioFormat.ENCODING_PCM_16BIT;
+        File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/reverseme.pcm");
+
+        // Delete any previous recording.
+        if (file.exists())
+            file.delete();
+
+
+        // Create the new file.
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to create " + file.toString());
+        }
+
+        try {
+            // Create a DataOuputStream to write the audio data into the saved file.
+            OutputStream os = new FileOutputStream(file);
+            BufferedOutputStream bos = new BufferedOutputStream(os);
+            DataOutputStream dos = new DataOutputStream(bos);
+
+            // Create a new AudioRecord object to record the audio.
+            int bufferSize = AudioRecord.getMinBufferSize(frequency, channelConfiguration,  audioEncoding);
+            AudioRecord audioRecord = new AudioRecord(MediaRecorder.AudioSource.VOICE_CALL,
+                    frequency, channelConfiguration,
+                    audioEncoding, bufferSize);
+
+            short[] buffer = new short[bufferSize];
+            audioRecord.startRecording();
+
+            isRecording = true ;
+            while (isRecording) {
+                int bufferReadResult = audioRecord.read(buffer, 0, bufferSize);
+                for (int i = 0; i < bufferReadResult; i++)
+                    dos.writeShort(buffer[i]);
+            }
+
+
+            audioRecord.stop();
+            dos.close();
+
+        } catch (Throwable t) {
+            Log.e("AudioRecord","Recording Failed");
+        }
     }
 }

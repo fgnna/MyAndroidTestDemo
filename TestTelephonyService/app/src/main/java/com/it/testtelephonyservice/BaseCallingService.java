@@ -95,6 +95,7 @@ public abstract class BaseCallingService extends Service
         @Override
         public void onCallStateChanged(int state, String number) {
             mCallState = state;
+            isAppOutCall = true;
             switch (state) {
                 case TelephonyManager.CALL_STATE_RINGING:
                     mNumber1 = number;
