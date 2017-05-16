@@ -63,6 +63,29 @@ public class MainActivity extends AppCompatActivity {
             }
 
         });
+
+
+        final RatingView ratingView = (RatingView) findViewById(R.id.ratingView);
+        ratingView.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                ratingView.setRating("类1",2);
+            }
+        },2000);
+        ratingView.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                ratingView.setRating("类1",2,"类2",4);
+            }
+        },5000);
+        ratingView.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                ratingView.setRating("类1",2,"类2",3,"类1",2);
+            }
+        },8000);
+
+
         View view = findViewById(R.id.text);
         view.setOnClickListener(new View.OnClickListener()
         {

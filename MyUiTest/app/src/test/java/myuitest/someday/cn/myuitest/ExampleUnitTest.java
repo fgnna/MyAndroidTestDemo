@@ -14,4 +14,9 @@ public class ExampleUnitTest {
     public void addition_isCorrect() throws Exception {
         assertEquals(4, 2 + 2);
     }
+    @Test
+    public void testArray() throws Exception {
+        int[] sss =new int[]{4,7,8,9,};
+        System.out.print(sss.length);
+    }
 }
