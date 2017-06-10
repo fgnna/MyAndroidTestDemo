@@ -8,3 +8,5 @@
  蓝牙通信测试
 ## SensorFrameworkTest
  运动传感器测试
+## StopSleepApp
+ 利用7.0新特，系统顶部栏快速设置QuickSettings（QSTile）,开发的禁止系统休眠小工具。

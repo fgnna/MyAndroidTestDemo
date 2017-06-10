@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="myuitest.someday.cn.myuitest.Main2Activity"
+    tools:showIn="@layout/activity_main2">
+
+    <View
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:background="#dcdcdc"
+        tools:layout_editor_absoluteX="139dp"
+        app:layout_constraintBottom_toBottomOf="@+id/view"
+        app:layout_constraintTop_toTopOf="@+id/view"
+        android:id="@+id/view2" />
+    <View
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:background="#00ffee"
+        tools:layout_editor_absoluteY="138dp"
+        tools:layout_editor_absoluteX="59dp"
+        android:id="@+id/view" />
+    <View
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="#00e555"
+        tools:layout_editor_absoluteX="236dp"
+        app:layout_constraintBottom_toBottomOf="@+id/view2"
+        app:layout_constraintTop_toTopOf="@+id/view2" />
+
+
+</android.support.constraint.ConstraintLayout>
