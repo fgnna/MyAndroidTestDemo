@@ -2,19 +2,25 @@ package testrootapp.someday.cn.testaudioplay;
 
 import android.content.ComponentName;
 import android.content.ServiceConnection;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
+
+import static android.R.attr.path;
 import static android.R.attr.x;
 import static testrootapp.someday.cn.testaudioplay.R.id.fab;
+import static testrootapp.someday.cn.testaudioplay.R.id.playMusicButton;
 import static testrootapp.someday.cn.testaudioplay.R.id.seekbar;
 
 public class PlaySimpleActivity extends AppCompatActivity implements MyAudioPlayService.PlayingListener ,View.OnClickListener
@@ -24,19 +30,22 @@ public class PlaySimpleActivity extends AppCompatActivity implements MyAudioPlay
         @Override
         public void onServiceConnected(ComponentName name, IBinder service)
         {
+            Log.d("MyAudioPlayService","onServiceConnected");
             binder = (MyAudioPlayService.MyAudioPlayServiceBinder) service;
             binder.setPlayingListener(PlaySimpleActivity.this);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-
+            Log.d("MyAudioPlayService","onServiceDisconnected");
+            binder=null;
         }
     };
 
     private TextView nameTextView;
     private FloatingActionButton fab;
     private SeekBar seekbar;
+    private PlayMusicBar playMusicBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +65,6 @@ public class PlaySimpleActivity extends AppCompatActivity implements MyAudioPlay
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 
-                binder.setPlayingProgress(seekBar.getProgress());
             }
 
             @Override
@@ -65,11 +73,18 @@ public class PlaySimpleActivity extends AppCompatActivity implements MyAudioPlay
             }
 
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
+            public void onStopTrackingTouch(SeekBar seekBar)
+            {
+                binder.setPlayingProgress(seekBar.getProgress());
             }
         });
         nameTextView = (TextView)findViewById(R.id.name);
         MyAudioPlayHelper.bindService(this, serviceConnection);
+
+        playMusicBar = (PlayMusicBar)findViewById(R.id.playMusicBar);
+
+
+
     }
 
     /** 播放监听 ***************************************************************************/
@@ -78,12 +93,16 @@ public class PlaySimpleActivity extends AppCompatActivity implements MyAudioPlay
     {
         nameTextView.setText(music.getName());
         seekbar.setMax(music.getMediaPlayer().getDuration());
+        playMusicBar.setMax(music.getMediaPlayer().getDuration());
+        playMusicBar.setTitle(music.getName());
+
     }
 
     @Override
     public void onPlayingProgress(int duration, int currentPosition)
     {
         seekbar.setProgress(currentPosition);
+        playMusicBar.setProgress(currentPosition);
     }
 
     @Override
@@ -91,6 +110,8 @@ public class PlaySimpleActivity extends AppCompatActivity implements MyAudioPlay
     {
         fab.setImageResource(R.mipmap.play);
         seekbar.setProgress(0);
+        playMusicBar.setProgress(0);
+
     }
 
     @Override

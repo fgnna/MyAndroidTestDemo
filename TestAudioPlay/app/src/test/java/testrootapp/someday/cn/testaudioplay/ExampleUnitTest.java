@@ -2,6 +2,9 @@ package testrootapp.someday.cn.testaudioplay;
 
 import org.junit.Test;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
 import static org.junit.Assert.*;
 
 /**
@@ -11,7 +14,12 @@ import static org.junit.Assert.*;
  */
 public class ExampleUnitTest {
     @Test
-    public void addition_isCorrect() throws Exception {
-        assertEquals(4, 2 + 2);
+    public void addition_isCorrect() throws Exception
+    {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.SECOND,2);
+        calendar.set(Calendar.MINUTE,5);
+        new SimpleDateFormat("mm:ss").format(calendar.getTime());
+        //System.out.print( );
     }
 }

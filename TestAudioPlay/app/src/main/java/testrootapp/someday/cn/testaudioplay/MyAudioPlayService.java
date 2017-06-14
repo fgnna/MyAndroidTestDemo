@@ -5,7 +5,9 @@ import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
@@ -21,8 +23,7 @@ import java.util.TimerTask;
  */
 
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
-public class MyAudioPlayService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener
-{
+public class MyAudioPlayService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnBufferingUpdateListener {
     private MyAudioPlayServiceBinder mBinder;
 
     private LinkedList<Music> mMediaPlayerList = new LinkedList<>();
@@ -31,6 +32,7 @@ public class MyAudioPlayService extends Service implements MediaPlayer.OnComplet
     private TimerTask mLoopTimerTask;
 
     private MediaPlayer mCurrentMediaPlayer;
+
 
     @Nullable
     @Override
@@ -71,6 +73,21 @@ public class MyAudioPlayService extends Service implements MediaPlayer.OnComplet
         openLoop();
     }
 
+    @Override
+    public boolean onError(MediaPlayer mp, int what, int extra)
+    {
+        Log.d(this.getClass().getSimpleName(),"onError:what="+what+"   extra="+extra);
+        mCurrentMediaPlayer = null;
+        mMediaPlayerList.removeFirst();
+        return false;
+    }
+
+    @Override
+    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+        Log.d(this.getClass().getSimpleName(),"onBufferingUpdate:percent="+percent);
+
+    }
+
     /**
      * APP内公开的音频播放接口
      */
@@ -87,6 +104,8 @@ public class MyAudioPlayService extends Service implements MediaPlayer.OnComplet
             }
             mediaPlayer.setOnCompletionListener(MyAudioPlayService.this);
             mediaPlayer.setOnPreparedListener(MyAudioPlayService.this);
+            mediaPlayer.setOnErrorListener(MyAudioPlayService.this);
+            mediaPlayer.setOnBufferingUpdateListener(MyAudioPlayService.this);
             Music music = new Music(id,name,path);
             music.setMediaPlayer(mediaPlayer);
             mMediaPlayerList.addLast(music);
@@ -118,7 +137,10 @@ public class MyAudioPlayService extends Service implements MediaPlayer.OnComplet
             }
             else if(0 != mMediaPlayerList.size())
             {
-                mMediaPlayerList.getFirst().getMediaPlayer().prepareAsync();
+                if(mMediaPlayerList.getFirst().getMediaPlayer().isPlaying())
+                    stop();
+                else
+                    mMediaPlayerList.getFirst().getMediaPlayer().prepareAsync();
             }
         }
 
@@ -127,6 +149,8 @@ public class MyAudioPlayService extends Service implements MediaPlayer.OnComplet
             if(null != mCurrentMediaPlayer)
                mCurrentMediaPlayer.stop();
             endLoop();
+            if(null != mPlayingListener)
+                mPlayingListener.onMusicStop();
         }
 
         public void cannel()
@@ -139,6 +163,8 @@ public class MyAudioPlayService extends Service implements MediaPlayer.OnComplet
             }
             mMediaPlayerList.clear();
             endLoop();
+            if(null != mPlayingListener)
+                mPlayingListener.onMusicStop();
         }
 
         public void setPlayingProgress(int position)
@@ -199,6 +225,18 @@ public class MyAudioPlayService extends Service implements MediaPlayer.OnComplet
 
 
 
+/** 处理循环通知播放进度 ********************************************************************************/
+    private Handler mHandler = new Handler()
+    {
+        @Override
+        public void handleMessage(Message msg) {
+            if(null != mCurrentMediaPlayer && null != mPlayingListener)
+            {
+                mPlayingListener.onPlayingProgress(mCurrentMediaPlayer.getDuration(),mCurrentMediaPlayer.getCurrentPosition());
+            }
+            super.handleMessage(msg);
+        }
+    };
 
     public void openLoop()
     {
@@ -215,21 +253,19 @@ public class MyAudioPlayService extends Service implements MediaPlayer.OnComplet
             @Override
             public void run()
             {
-                if(null != mCurrentMediaPlayer && null != mPlayingListener)
-                {
-                    mPlayingListener.onPlayingProgress(mCurrentMediaPlayer.getDuration(),mCurrentMediaPlayer.getCurrentPosition());
-                }
-
+                mHandler.sendEmptyMessage(0);
             }
         };
         mLoopTimer.schedule(mLoopTimerTask, 1000, 1000);
     }
     public void endLoop()
     {
-        mLoopTimer.cancel();
+        if(mLoopTimer != null)
+            mLoopTimer.cancel();
         mLoopTimerTask = null;
         mLoopTimer = null;
     }
+/************************************************************************************************************* 处理循环通知播放进度 */
 
     @Override
     public void onDestroy() {
