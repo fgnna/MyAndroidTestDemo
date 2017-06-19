@@ -22,11 +22,8 @@
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
 
-        <service android:name=".MyAudioPlayService">
-            <intent-filter>
-                <action android:name="testrootapp.someday.cn.testaudioplay.MyAudioPlayService"/>
-            </intent-filter>
-        </service>
+        <service android:name=".service.audio.MyAudioPlayService"></service>
+        <service android:name=".service.TestService"></service>
 
         <activity
             android:name=".PlaySimpleActivity"
@@ -37,6 +34,12 @@
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".Main3Activity"
+            android:label="@string/title_activity_main3"
+            android:theme="@style/AppTheme.NoActionBar">
+
         </activity>
     </application>
 

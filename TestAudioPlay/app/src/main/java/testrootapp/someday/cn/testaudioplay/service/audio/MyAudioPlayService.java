@@ -1,4 +1,4 @@
-package testrootapp.someday.cn.testaudioplay;
+package testrootapp.someday.cn.testaudioplay.service.audio;
 
 import android.app.Service;
 import android.content.Intent;
@@ -17,6 +17,8 @@ import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import testrootapp.someday.cn.testaudioplay.BuildConfig;
+
 /**
  * 音频播放服务
  * Created by je on 17-6-12.
@@ -33,67 +35,12 @@ public class MyAudioPlayService extends Service implements MediaPlayer.OnComplet
 
     private MediaPlayer mCurrentMediaPlayer;
 
-
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent)
-    {
-        Log.d(this.getClass().getSimpleName(),"onBind");
-        if(null == mBinder)
-            mBinder = new MyAudioPlayServiceBinder();
-        return mBinder;
-    }
-
-    @Override
-    public void onCompletion(MediaPlayer mp)
-    {
-        Log.d(this.getClass().getSimpleName(),"onCompletion");
-        mp.stop();
-        mp.release();
-        if(null != mPlayingListener)
-            mPlayingListener.onMusicStop();
-
-        mMediaPlayerList.removeFirst();
-        mCurrentMediaPlayer = null;
-        if(0 != mMediaPlayerList.size())
-            mMediaPlayerList.getFirst().getMediaPlayer().prepareAsync();
-    }
-
-    @Override
-    public void onPrepared(MediaPlayer mp)
-    {
-        Log.d(this.getClass().getSimpleName(),"onPrepared");
-        if(null != mPlayingListener || 0 != mMediaPlayerList.size())
-        {
-            mPlayingListener.onPlayingMusic(mMediaPlayerList.getFirst());
-        }
-
-        mCurrentMediaPlayer = mp;
-        mp.start();
-        openLoop();
-    }
-
-    @Override
-    public boolean onError(MediaPlayer mp, int what, int extra)
-    {
-        Log.d(this.getClass().getSimpleName(),"onError:what="+what+"   extra="+extra);
-        mCurrentMediaPlayer = null;
-        mMediaPlayerList.removeFirst();
-        return false;
-    }
-
-    @Override
-    public void onBufferingUpdate(MediaPlayer mp, int percent) {
-        Log.d(this.getClass().getSimpleName(),"onBufferingUpdate:percent="+percent);
-
-    }
-
     /**
      * APP内公开的音频播放接口
      */
     class MyAudioPlayServiceBinder extends Binder
     {
-        public void addMuics(String id,String name,String path)
+        public void addMuics(String id, String name, String path)
         {
             MediaPlayer mediaPlayer = new MediaPlayer();
             try {
@@ -140,19 +87,36 @@ public class MyAudioPlayService extends Service implements MediaPlayer.OnComplet
                 if(mMediaPlayerList.getFirst().getMediaPlayer().isPlaying())
                     stop();
                 else
-                    mMediaPlayerList.getFirst().getMediaPlayer().prepareAsync();
+                {
+                    try
+                    {
+                        mMediaPlayerList.getFirst().getMediaPlayer().prepareAsync();
+                        if(null != mPlayingListener)
+                        {
+                            mPlayingListener.onPlayingMusic(mMediaPlayerList.getFirst());
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        //准备过程中重复调用会出异常
+                    }
+
+                }
             }
         }
 
         public void stop()
         {
             if(null != mCurrentMediaPlayer)
-               mCurrentMediaPlayer.stop();
+                mCurrentMediaPlayer.stop();
             endLoop();
             if(null != mPlayingListener)
                 mPlayingListener.onMusicStop();
         }
 
+        /**
+         * 停止播放及清空播放列表
+         */
         public void cannel()
         {
             if(null != mCurrentMediaPlayer)
@@ -161,10 +125,21 @@ public class MyAudioPlayService extends Service implements MediaPlayer.OnComplet
                 mCurrentMediaPlayer.release();
                 mCurrentMediaPlayer = null;
             }
+            if(0 != mMediaPlayerList.size())
+            {
+                try {
+                    mMediaPlayerList.getFirst().getMediaPlayer().stop();
+                    mMediaPlayerList.getFirst().getMediaPlayer().release();
+                }catch (Exception e)
+                {
+                    //以防在异步准备，但还没完成准备阶段时调用stop()引发异常
+                }
+            }
+
             mMediaPlayerList.clear();
             endLoop();
             if(null != mPlayingListener)
-                mPlayingListener.onMusicStop();
+                mPlayingListener.onCancel();
         }
 
         public void setPlayingProgress(int position)
@@ -174,58 +149,87 @@ public class MyAudioPlayService extends Service implements MediaPlayer.OnComplet
                 mCurrentMediaPlayer.seekTo(position);
             }
         }
+
+
+        public void stopService()
+        {
+            cannel();
+            stopSelf();
+        }
     }
 
-    public interface PlayingListener
+
+
+/*******************************************************************************************/
+/** 播放器事件监听 ***************************************************************************/
+/*******************************************************************************************/
+    @Override
+    public void onCompletion(MediaPlayer mp)
     {
-        void onPlayingMusic(Music music);
-        void onPlayingProgress(int duration, int currentPosition);
-        void onMusicStop();
-        void onMusicError();
+        Log.d(this.getClass().getSimpleName(),"onCompletion");
+        mp.stop();
+        mp.release();
+
+        if(0 != mMediaPlayerList.size())
+            mMediaPlayerList.removeFirst();
+        mCurrentMediaPlayer = null;
+        if(0 != mMediaPlayerList.size())
+        {
+            if(null != mPlayingListener)
+            {
+                mPlayingListener.onPlayingMusic(mMediaPlayerList.getFirst());
+            }
+            mMediaPlayerList.getFirst().getMediaPlayer().prepareAsync();
+            Log.d(this.getClass().getSimpleName(),"nextPlay");
+        }
+        else
+        {
+            if(null != mPlayingListener)
+            {
+                mPlayingListener.onAllPlaySuccess();
+                Log.d(this.getClass().getSimpleName(),"onAllPlaySuccess");
+                stopSelf();
+            }
+        }
     }
 
-    /**
-     * 歌曲信息实体类
-     */
-    public static class Music
+    @Override
+    public void onPrepared(MediaPlayer mp)
     {
-        private String id;
-        private String name;
-        private String path;
-        private MediaPlayer mMediaPlayer;
-        public Music(String id, String name, String path)
+        Log.d(this.getClass().getSimpleName(),"onPrepared");
+        if(null != mPlayingListener && 0 != mMediaPlayerList.size())
         {
-            this.id = id;
-            this.name = name;
-            this.path = path;
+            mPlayingListener.onPlayingMusic(mMediaPlayerList.getFirst());
         }
 
+        if(BuildConfig.DEBUG)//直接 跳到最后10秒，节省调试时间
+            mp.seekTo(mp.getDuration()-20000);
 
-        void setMediaPlayer(MediaPlayer mediaPlayer)
-        {
-            mMediaPlayer = mediaPlayer;
-        }
-        MediaPlayer getMediaPlayer()
-        {
-            return mMediaPlayer;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getPath() {
-            return path;
-        }
+        mCurrentMediaPlayer = mp;
+        mp.start();
+        openLoop();
     }
 
+    @Override
+    public boolean onError(MediaPlayer mp, int what, int extra)
+    {
+        Log.d(this.getClass().getSimpleName(),"onError:what="+what+"   extra="+extra);
+        mCurrentMediaPlayer = null;
+        mMediaPlayerList.removeFirst();
+        if(null != mPlayingListener)
+            mPlayingListener.onMusicError();
+        return false;
+    }
+
+    @Override
+    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+        //Log.d(this.getClass().getSimpleName(),"onBufferingUpdate:percent="+percent);
+    }
+/**-------------------------------------------------------------------------------------播放器事件监听*/
 
 
-/** 处理循环通知播放进度 ********************************************************************************/
+
+    /** 处理循环通知播放进度 ********************************************************************************/
     private Handler mHandler = new Handler()
     {
         @Override
@@ -265,7 +269,16 @@ public class MyAudioPlayService extends Service implements MediaPlayer.OnComplet
         mLoopTimerTask = null;
         mLoopTimer = null;
     }
-/************************************************************************************************************* 处理循环通知播放进度 */
+    /********************************************************************************* 处理循环通知播放进度 */
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent)
+    {
+        if(null == mBinder)
+            mBinder = new MyAudioPlayServiceBinder();
+        return mBinder;
+    }
 
     @Override
     public void onDestroy() {

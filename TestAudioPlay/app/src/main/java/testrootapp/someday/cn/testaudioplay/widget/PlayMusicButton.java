@@ -1,4 +1,4 @@
-package testrootapp.someday.cn.testaudioplay;
+package testrootapp.someday.cn.testaudioplay.widget;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -9,6 +9,8 @@ import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
+
+import testrootapp.someday.cn.testaudioplay.R;
 
 /**
  * 带进度显示的音频播放按钮

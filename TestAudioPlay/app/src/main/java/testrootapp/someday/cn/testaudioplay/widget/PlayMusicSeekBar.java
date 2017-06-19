@@ -1,4 +1,4 @@
-package testrootapp.someday.cn.testaudioplay;
+package testrootapp.someday.cn.testaudioplay.widget;
 
 /**
  * 带进度条的播放控制器

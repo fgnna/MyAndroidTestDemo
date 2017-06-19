@@ -13,9 +13,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import testrootapp.someday.cn.testaudioplay.service.audio.MyAudioPlayService;
+
 public class MainActivity2 extends AppCompatActivity {
 
-    public boolean isBind = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,61 +32,11 @@ public class MainActivity2 extends AppCompatActivity {
             public void onClick(View view) {
                 //startService(new Intent(MainActivity.this,MyAudioPlayService.class));
 
-                if(!isBind)
-                {
-                    startService(new Intent(MainActivity2.this,MyAudioPlayService.class));
-                    bindService(new Intent(MainActivity2.this,MyAudioPlayService.class),conn,BIND_AUTO_CREATE);
-                    isBind = true;
-                }
-                else
-                {
-                    unbindService(conn);
-                    isBind = false;
-                }
                 Snackbar.make(view, "播放", Snackbar.LENGTH_LONG).setAction("Action", null).show();
             }
         });
 
     }
-
-
-    public MyAudioPlayService.MyAudioPlayServiceBinder countService;
-    private ServiceConnection conn = new ServiceConnection() {
-
-        /** 获取服务对象时的操作 */
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            // TODO Auto-generated method stub
-            countService = (MyAudioPlayService.MyAudioPlayServiceBinder) service;
-
-        }
-
-        /** 无法获取到服务对象时的操作 */
-        public void onServiceDisconnected(ComponentName name) {
-            // TODO Auto-generated method stub
-            countService = null;
-        }
-
-    };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
