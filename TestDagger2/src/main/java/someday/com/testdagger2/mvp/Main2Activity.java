@@ -5,8 +5,10 @@ import android.util.Log;
 
 import someday.com.testdagger2.R;
 import someday.com.testdagger2.mvp.base.BaseMvpActivity;
+import someday.com.testdagger2.mvp.contract.MainContract;
+import someday.com.testdagger2.mvp.presenter.MainPresenter;
 
-public class Main2Activity extends BaseMvpActivity
+public class Main2Activity extends BaseMvpActivity<MainPresenter>
 {
 
     @Override
@@ -15,14 +17,19 @@ public class Main2Activity extends BaseMvpActivity
         return R.layout.activity_main2;
     }
 
-    public void setText(String ssss)
+
+    @Override
+    protected void onResume()
     {
-        Log.d("ssssssss","设置了一个SSS");
+        super.onResume();
+        basePresenter.loadData();
     }
 
     @Override
     protected void initInject()
     {
-
+        getActivityComponent().inject(this);
     }
+
+
 }

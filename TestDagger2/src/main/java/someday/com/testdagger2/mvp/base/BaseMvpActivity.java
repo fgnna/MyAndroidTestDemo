@@ -13,9 +13,9 @@ public abstract class BaseMvpActivity <T extends BasePresenter>  extends BaseAct
 
 
     @Override
-    public void onCreate( Bundle savedInstanceState,  PersistableBundle persistentState)
+    public void onCreate( Bundle savedInstanceState)
     {
-        super.onCreate(savedInstanceState, persistentState);
+        super.onCreate(savedInstanceState);
         initInject();
         if (null != basePresenter) {
             basePresenter.attachView(this);

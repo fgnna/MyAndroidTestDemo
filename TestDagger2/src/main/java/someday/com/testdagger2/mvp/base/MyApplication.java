@@ -2,8 +2,8 @@ package someday.com.testdagger2.mvp.base;
 
 import android.app.Application;
 
-import someday.com.testdagger2.mvp.di.AppComponent;
-import someday.com.testdagger2.mvp.di.DaggerAppComponent;
+import someday.com.testdagger2.mvp.di.component.AppComponent;
+import someday.com.testdagger2.mvp.di.component.DaggerAppComponent;
 
 public class MyApplication extends Application
 {

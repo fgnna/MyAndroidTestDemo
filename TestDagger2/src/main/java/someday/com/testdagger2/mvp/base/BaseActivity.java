@@ -4,8 +4,8 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
-import someday.com.testdagger2.mvp.di.ActivityComponent;
-import someday.com.testdagger2.mvp.di.ActivityModule;
+import someday.com.testdagger2.mvp.di.component.ActivityComponent;
+import someday.com.testdagger2.mvp.di.component.DaggerActivityComponent;
 
 public  abstract class BaseActivity extends AppCompatActivity implements BaseView
 {
@@ -63,11 +63,10 @@ public  abstract class BaseActivity extends AppCompatActivity implements BaseVie
     }
 
 
-//    protected ActivityComponent getActivityComponent() {
-//        return DaggerActivityComponent.builder()
-//                .appComponent(MyApplication.getAppComponent())
-//                .activityModule(new ActivityModule())
-//                .build();
-//    }
+    protected ActivityComponent getActivityComponent() {
+        return DaggerActivityComponent.builder()
+                .appComponent(MyApplication.getAppComponent())
+                .build();
+    }
 
 }

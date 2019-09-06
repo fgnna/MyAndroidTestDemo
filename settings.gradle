@@ -1,2 +1,7 @@
+//include ':Test_Permissions'
+//include ':test_service'
+include ':Test_ShareMemory'
 //include ':app'
-include        ':TestDagger2'
+//include        ':TestDagger2', ':TestDagger2Kt'
+//include ':TestDagger2ViewMode'
+//include ':TestDagger2KtMvp'
